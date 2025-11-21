@@ -5,18 +5,18 @@ import Link from "next/link";
 
 const highlights = [
   { title: "Tickets & LLM-Automation", body: "LLM erkennt Intents, plant To-Dos und erstellt Tickets mit Quellen aus Agent Seyma." },
-  { title: "Softwareverteilung", body: "MSI/EXE/Skripte, Ring-Rollouts, Status pro Gerät und Agent-Rückmeldungen." },
-  { title: "Service Store", body: "Self-Service für User mit Approvals, Deployments oder Tickets – alles tenantfähig." },
+  { title: "Softwareverteilung", body: "MSI/EXE/Skripte, Ring-Rollouts, Status pro Geraet und Agent-Rueckmeldungen." },
+  { title: "Service Store", body: "Self-Service fuer User mit Approvals, Deployments oder Tickets - alles tenantfaehig." },
   { title: "Agents & Telemetrie", body: "Status, Events, Logs, Remote Actions. Cloud + lokale Hands des Agents." },
 ];
 
 const modules = [
-  { label: "Control Room", desc: "Zentrale UI für Multi-Tenant Ops." },
-  { label: "API First", desc: "REST + Webhooks; vorbereitet für WebSockets." },
+  { label: "Control Room", desc: "Zentrale UI fuer Multi-Tenant Ops." },
+  { label: "API First", desc: "REST + Webhooks; vorbereitet fuer WebSockets." },
   { label: "Security", desc: "Entra ID / OIDC, Roles, Audit, Mandanten-Isolation." },
   { label: "Deploy", desc: "Packages, Device Groups, Ring-Rollouts." },
   { label: "Tickets", desc: "Lifecycle, Kommentare, Attachments, Quelle Portal/Agent." },
-  { label: "Store", desc: "Services & Apps verknüpft mit Deployments oder Tickets." },
+  { label: "Store", desc: "Services & Apps verknuepft mit Deployments oder Tickets." },
 ];
 
 export default function LandingPage() {
@@ -28,61 +28,59 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-gradient-to-b from-slate-950 via-black to-slate-950 text-slate-100">
-      <div className="h-full overflow-y-auto">
-        {/* Boot-Overlay */}
-        {booting && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black">
-            <div className="text-center space-y-4 animate-pulse">
-              <p className="text-xs tracking-[0.28em] text-slate-400 uppercase">
-                Initializing Seyma Cloud...
-              </p>
-              <div className="mx-auto h-1 w-48 overflow-hidden rounded-full bg-slate-800">
-                <div className="h-full w-1/2 animate-[loading_1.2s_ease-in-out_infinite] rounded-full bg-emerald-400" />
-              </div>
+    <div className="relative min-h-screen bg-gradient-to-b from-slate-950 via-black to-slate-950 text-slate-100">
+      {booting && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black">
+          <div className="text-center space-y-4 animate-pulse">
+            <p className="text-xs tracking-[0.28em] text-slate-400 uppercase">
+              Initializing Seyma Cloud...
+            </p>
+            <div className="mx-auto h-1 w-48 overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full w-1/2 animate-[loading_1.2s_ease-in-out_infinite] rounded-full bg-emerald-400" />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <style jsx global>{`
-          @keyframes loading {
-            0% { transform: translateX(-100%); }
-            50% { transform: translateX(80%); }
-            100% { transform: translateX(120%); }
-          }
-        `}</style>
+      <style jsx global>{`
+        @keyframes loading {
+          0% { transform: translateX(-100%); }
+          50% { transform: translateX(80%); }
+          100% { transform: translateX(120%); }
+        }
+      `}</style>
 
-        <header className="sticky top-0 z-20 bg-black/50 backdrop-blur border-b border-slate-800/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-            <Link href="/" className="flex items-center gap-2 text-xs font-semibold tracking-[0.26em]">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.7)]" />
-              SEYMA CLOUD
+      <header className="sticky top-0 z-20 bg-black/50 backdrop-blur border-b border-slate-800/60">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <Link href="/" className="flex items-center gap-2 text-xs font-semibold tracking-[0.26em]">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.7)]" />
+            SEYMA CLOUD
+          </Link>
+          <nav className="hidden items-center gap-6 text-sm text-slate-400 md:flex">
+            <a className="hover:text-slate-100" href="#modules">Module</a>
+            <a className="hover:text-slate-100" href="#features">Features</a>
+            <a className="hover:text-slate-100" href="#security">Security</a>
+            <Link
+              href="/login"
+              className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-slate-900 hover:bg-white"
+            >
+              Launch Portal
             </Link>
-            <nav className="hidden items-center gap-6 text-sm text-slate-400 md:flex">
-              <a className="hover:text-slate-100" href="#modules">Module</a>
-              <a className="hover:text-slate-100" href="#features">Features</a>
-              <a className="hover:text-slate-100" href="#security">Security</a>
-              <Link
-                href="/login"
-                className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-slate-900 hover:bg-white"
-              >
-                Launch Portal
-              </Link>
-            </nav>
-          </div>
-        </header>
+          </nav>
+        </div>
+      </header>
 
-        <main className="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-12 md:py-16">
+      <main className="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-8 md:py-12">
         {/* Hero */}
-        <section className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
+        <section className="grid min-h-screen gap-10 pt-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
           <div className="space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">VIKI-Mode, aber legal</p>
             <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
-              Seyma Cloud. Dein Control Room für Tickets, Deployments, Stores und Agents.
+              Seyma Cloud. Dein Control Room fuer Tickets, Deployments, Stores und Agents.
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-slate-300 md:text-base">
-              Bootloader, Portal, API: Alles für Multi-Tenant Ops. Seyma kombiniert LLM-Planung, Ticketing,
-              Softwareverteilung, Service Store und Agent-Telemetrie – in einem dunklen, aufgeräumten Interface.
+              Bootloader, Portal, API: Alles fuer Multi-Tenant Ops. Seyma kombiniert LLM-Planung, Ticketing,
+              Softwareverteilung, Service Store und Agent-Telemetrie - in einem dunklen, aufgeraeumten Interface.
             </p>
             <div className="flex flex-wrap gap-3 text-sm">
               <Link
@@ -103,6 +101,9 @@ export default function LandingPage() {
               <span className="rounded-full border border-slate-800 px-3 py-1">Multi-Tenant</span>
               <span className="rounded-full border border-slate-800 px-3 py-1">LLM-Orchestration</span>
               <span className="rounded-full border border-slate-800 px-3 py-1">Deploy & Tickets</span>
+            </div>
+            <div className="pt-6 text-xs uppercase tracking-[0.28em] text-slate-500">
+              Scroll down
             </div>
           </div>
           <div className="rounded-3xl border border-slate-800/70 bg-slate-900/50 p-6 shadow-2xl">
@@ -146,7 +147,7 @@ export default function LandingPage() {
         {/* Modules */}
         <section id="modules" className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">Module im Überblick</h2>
+            <h2 className="text-xl font-semibold text-white">Module im Ueberblick</h2>
             <span className="text-xs text-slate-400">Portal + API + Agent</span>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
@@ -176,13 +177,13 @@ export default function LandingPage() {
         <section id="security" className="space-y-4 rounded-3xl border border-slate-800/70 bg-slate-950/60 p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-semibold text-white">Security / Compliance</h2>
-            <span className="rounded-full border border-emerald-500/40 px-3 py-1 text-xs text-emerald-300">Mandantenfähig</span>
+            <span className="rounded-full border border-emerald-500/40 px-3 py-1 text-xs text-emerald-300">Mandantenfaehig</span>
           </div>
           <ul className="grid gap-2 text-sm text-slate-300 md:grid-cols-2">
             <li>Entra ID / OpenID Connect, Roles & Audit Trails</li>
             <li>Postgres mit Tenant-Isolation; Agent-Key-Scopes</li>
-            <li>Object Storage für Logs/Attachments</li>
-            <li>Optionale WebSockets für Live-Events</li>
+            <li>Object Storage fuer Logs/Attachments</li>
+            <li>Optionale WebSockets fuer Live-Events</li>
           </ul>
         </section>
 
@@ -191,7 +192,7 @@ export default function LandingPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-300">Ready</p>
           <h3 className="text-2xl font-semibold text-white">Starte den Seyma Control Room</h3>
           <p className="max-w-2xl text-sm text-slate-300">
-            Launch direkt ins Portal oder sprich mit der API – Tickets, Deployments, Agents und Store sind nur einen Klick entfernt.
+            Launch direkt ins Portal oder sprich mit der API - Tickets, Deployments, Agents und Store sind nur einen Klick entfernt.
           </p>
           <div className="flex flex-wrap justify-center gap-3 text-sm">
             <Link
@@ -226,7 +227,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      </div>
     </div>
   );
 }
