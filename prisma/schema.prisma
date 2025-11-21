@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TicketStatus {
+  new
+  in_progress
+  waiting
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  normal
+  high
+  critical
+}
+
+enum UserRole {
+  owner
+  admin
+  operator
+  viewer
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users   User[]
+  agents  Agent[]
+  tickets Ticket[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @db.Uuid @map("tenant_id")
+  email        String
+  displayName  String    @map("display_name")
+  role         UserRole
+  authProvider String    @default("local") @map("auth_provider")
+  authSubjectId String?  @map("auth_subject_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  ticketsRequested Ticket[] @relation("TicketRequester")
+  ticketsAssigned  Ticket[] @relation("TicketAssignee")
+  agents           Agent[]
+
+  @@unique([tenantId, email], map: "users_tenant_email_uq")
+  @@map("users")
+}
+
+model Agent {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @db.Uuid @map("tenant_id")
+  deviceName   String    @map("device_name")
+  userId       String?   @db.Uuid @map("user_id")
+  osVersion    String    @map("os_version")
+  seymaVersion String    @map("seyma_version")
+  onlineStatus String    @map("online_status")
+  lastSeenAt   DateTime? @map("last_seen_at")
+  tags         String[]  @default([])
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId], map: "agents_tenant_idx")
+  @@index([tenantId, deviceName], map: "agents_tenant_hostname")
+  @@map("agents")
+}
+
+model Ticket {
+  id                String         @id @default(uuid()) @db.Uuid
+  tenantId          String         @db.Uuid @map("tenant_id")
+  humanId           String         @map("human_id")
+  title             String
+  description       String         @default("")
+  status            TicketStatus   @default(new)
+  priority          TicketPriority @default(normal)
+  requesterUserId   String?        @db.Uuid @map("requester_user_id")
+  assigneeUserId    String?        @db.Uuid @map("assignee_user_id")
+  source            String
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @default(now()) @map("updated_at")
+  closedAt          DateTime?      @map("closed_at")
+
+  tenant          Tenant @relation(fields: [tenantId], references: [id])
+  requesterUser   User?  @relation("TicketRequester", fields: [requesterUserId], references: [id])
+  assigneeUser    User?  @relation("TicketAssignee", fields: [assigneeUserId], references: [id])
+
+  @@unique([tenantId, humanId], map: "tickets_tenant_human_id_uq")
+  @@index([tenantId, status, createdAt], map: "tickets_tenant_status_idx")
+  @@index([requesterUserId, createdAt], map: "tickets_requester_idx")
+  @@map("tickets")
+}
