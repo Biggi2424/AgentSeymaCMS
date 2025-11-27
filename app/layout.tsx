@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Seyma Cloud – Control Room",
+  title: "Zephron Cloud - Control Room",
   description:
     "Mandantenfaehiges Control-Portal fuer Tickets, Softwareverteilung, Service Store und Agents.",
 };
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de">
+    <html lang="de" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

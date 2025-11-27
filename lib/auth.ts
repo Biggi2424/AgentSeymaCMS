@@ -16,8 +16,8 @@ export async function getCurrentUser(): Promise<SessionUser> {
   return {
     id: "demo-user",
     tenantId: "demo-tenant",
-    email: "seyma.admin@vdma.example",
-    displayName: "Seyma Admin",
+    email: "zephron.admin@vdma.example",
+    displayName: "Zephron Admin",
     role: "owner",
   };
 }

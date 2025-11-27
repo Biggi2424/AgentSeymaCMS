@@ -22,7 +22,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <Link href="/dashboard" className="mb-8 flex items-center gap-2 px-2">
           <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.8)]" />
           <span className="text-xs font-semibold tracking-[0.24em] text-zinc-300">
-            SEYMA CLOUD
+            ZEPHRON CLOUD
           </span>
         </Link>
         <nav className="space-y-1 text-sm">
@@ -56,11 +56,11 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-3 text-sm">
             <div className="text-right">
-              <p className="font-medium text-zinc-100">seyma.admin@vdma.example</p>
+              <p className="font-medium text-zinc-100">zephron.admin@vdma.example</p>
               <p className="text-xs text-zinc-500">Owner</p>
             </div>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-emerald-950">
-              SA
+              ZA
             </div>
           </div>
         </header>

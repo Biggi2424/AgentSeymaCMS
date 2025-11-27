@@ -43,11 +43,11 @@ export default function LandingPage() {
 
     logEl.innerHTML = "";
     const lines = [
-      "[BOOT] Zephron wird gestartet...",
-      "[BOOT] Komponenten werden vorbereitet...",
-      "[BOOT] Einstellungen werden geprueft...",
-      "[BOOT] Oberflaeche wird geladen...",
-      "[OK] Zephron ist bereit.",
+      "[BOOT] Starting Zephron...",
+      "[BOOT] Preparing components...",
+      "[BOOT] Checking settings...",
+      "[BOOT] Loading interface...",
+      "[OK] Zephron is ready.",
     ];
 
     let index = 0;
@@ -65,7 +65,7 @@ export default function LandingPage() {
       bootloader.classList.add("bootloader-hidden");
       if (video && typeof video.play === "function") {
         video.play().catch(() => {
-          // Autoplay kann blockiert sein; dann bleibt das Standbild.
+          // Autoplay may be blocked; fallback to the current frame.
         });
       }
       window.setTimeout(() => {
@@ -158,7 +158,7 @@ export default function LandingPage() {
         <div className="bootloader-progress">
           <div ref={barRef} className="bootloader-progress-bar" />
         </div>
-        <div className="bootloader-hint">Bitte warten - Zephron wird gestartet...</div>
+        <div className="bootloader-hint">Please wait - starting Zephron...</div>
       </div>
 
       <div className="page">
@@ -178,22 +178,12 @@ export default function LandingPage() {
           </video>
           <div className="hero-bg" />
           <div className="hero-grain" />
-          <div className="hero-aurora" />
-          <div className="hero-beam" />
           <div className="hero-inner">
             <div className="hero-center">
               <div className="hero-center-inner">
                 <div className="hero-center-kicker">WATCH ANALYZE CONTROL</div>
                 <div className="hero-center-title">ZEPHRON</div>
                 <p className="hero-center-subtitle">Your powerful agent</p>
-                <div className="hero-chip-row">
-                  <span className="hero-chip">Signal aware</span>
-                  <span className="hero-chip">Action ready</span>
-                  <span className="hero-chip">Guardrails on</span>
-                </div>
-                <p className="hero-footnote">
-                  Calm control-room energy: see, understand, act - immer mit Transparenz.
-                </p>
               </div>
             </div>
           </div>
@@ -208,10 +198,9 @@ export default function LandingPage() {
                 Always watching your Windows fleet.
               </h2>
               <p className="section-text section-lead">
-                Zephron never sleeps. Es beobachtet alles, was du freigibst - von einem einzelnen Laptop
-                bis zum gesamten Unternehmensnetz: CPU, RAM, Platten, Prozesse, Services, Netzwerk, Logs,
-                Events. End-to-end statt 20 Tools: Clients, Server, Firewalls, Drucker, Switches, Cloud
-                Services in einer Sicht.
+                Zephron never sleeps. It watches everything you allow - from a single laptop to the entire enterprise:
+                CPU, RAM, disks, processes, services, network, logs, events. End-to-end instead of 20 tools:
+                clients, servers, firewalls, printers, switches, cloud services in one view.
               </p>
               <div className="section-pills-row">
                 <div className="section-pill">
@@ -227,6 +216,26 @@ export default function LandingPage() {
                   Context for every signal
                 </div>
               </div>
+              <div className="section-stack">
+                <div className="section-card">
+                  <div className="section-card-title">System awareness</div>
+                  <p className="section-card-text">
+                    CPU, RAM, disks, processes, services, network, logs, events — always as a live model per device.
+                  </p>
+                  <div className="section-card-meta">
+                    <span className="badge-dot" /> 143 devices observed
+                  </div>
+                </div>
+                <div className="section-card">
+                  <div className="section-card-title">Signal clarity</div>
+                  <p className="section-card-text">
+                    Sees anomalies instead of spam: baseline-aware, learns your normal and surfaces only what matters.
+                  </p>
+                  <div className="section-card-meta">
+                    <span className="badge-dot" /> 9 silent issues found
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -240,27 +249,39 @@ export default function LandingPage() {
                 Seeing is nothing without understanding.
               </h2>
               <p className="section-text section-lead">
-                Zephron verwandelt rohe Signale in Entscheidungen: Plain-English Fragen, tiefe Diagnostik,
-                Empfehlungen mit Begruendung.
+                Zephron turns raw signals into decisions: plain-English questions, deep diagnostics,
+                recommendations with reasoning.
               </p>
               <div className="section-alt-cards">
                 <div className="section-alt-card">
                   <div className="section-alt-card-label">Natural language</div>
                   <p>
-                    Frag einfach: Warum ist dieser Server langsam? Wo sind wir verwundbar? Was ist mit dem VPN?
+                    Just ask: Why is this server slow? Where are we vulnerable? What is wrong with this VPN user?
                   </p>
+                  <ul className="nl-list">
+                    <li>„Give me the root cause timeline.“</li>
+                    <li>„Show anomalies per site.“</li>
+                  </ul>
                 </div>
                 <div className="section-alt-card">
                   <div className="section-alt-card-label">Root causes</div>
                   <p>
-                    Korrelation aus Metriken, Logs, Topologie und Historie statt Raetseln; von einem PC bis zum ganzen Netz.
+                    Correlates metrics, logs, topology, and history instead of guessing; from one PC to the whole network.
                   </p>
+                  <div className="micro-bar">
+                    <span style={{ width: "62%" }} />
+                    <span style={{ width: "34%" }} />
+                    <span style={{ width: "78%" }} />
+                  </div>
                 </div>
                 <div className="section-alt-card">
                   <div className="section-alt-card-label">Explainable</div>
                   <p>
-                    Jede Empfehlung kommt mit einem Warum: gesehenes Muster, Kontext, Trade-offs und Alternativen.
+                    Every recommendation comes with a why: observed pattern, context, trade-offs, and alternatives.
                   </p>
+                  <div className="badge-line">
+                    <span className="badge-dot" /> Impact, Risk, Confidence
+                  </div>
                 </div>
               </div>
             </div>
@@ -276,27 +297,38 @@ export default function LandingPage() {
                 From insights to action, with guardrails.
               </h2>
               <p className="section-text section-lead">
-                Zephron handelt: Apps oeffnen, Policies setzen, Software ausrollen, Skripte starten,
-                Konfigurationen reparieren - ausgelöst per Sprache oder Text, immer mit Rueckmeldung.
+                Zephron acts: open apps, set policies, roll out software, run scripts, fix configs - triggered by voice or text, always with feedback.
               </p>
               <div className="section-alt-cards">
                 <div className="section-alt-card">
                   <div className="section-alt-card-label">Execution</div>
                   <p>
-                    Von Browser oeffnen und Teile bestellen bis Patch-Waves an alle Laptops mit Auto-Rollback.
+                    From opening a browser to buy parts to patch waves across all laptops with auto-rollback.
                   </p>
+                  <div className="badge-line">
+                    <span className="badge-dot" /> Voice / Text / API
+                  </div>
                 </div>
                 <div className="section-alt-card">
                   <div className="section-alt-card-label">Guardrails</div>
                   <p>
-                    Keine kritische Aktion ohne Checks, nichts im Geheimen, alles geloggt und erklaert; du genehmigst oder delegierst.
+                    No critical action without checks, nothing hidden, everything logged and explained; you approve or delegate.
                   </p>
+                  <ul className="nl-list">
+                    <li>Safeties on by default</li>
+                    <li>Approval or delegate</li>
+                  </ul>
                 </div>
                 <div className="section-alt-card">
                   <div className="section-alt-card-label">Feedback</div>
                   <p>
-                    Nach jedem Schritt: Was wurde getan, was hat sich geaendert, was ist als naechstes geplant.
+                    After every step: what happened, what changed, what is planned next.
                   </p>
+                  <div className="micro-bar">
+                    <span style={{ width: "48%" }} />
+                    <span style={{ width: "86%" }} />
+                    <span style={{ width: "34%" }} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -308,10 +340,10 @@ export default function LandingPage() {
             <div>&copy; 2025 Agent Zephron - Autonomous Windows Support Platform</div>
             <div style={{ display: "flex", gap: "12px" }}>
               <a href="#" className="link">
-                Impressum
+                Imprint
               </a>
               <a href="#" className="link">
-                Datenschutz
+                Privacy
               </a>
             </div>
           </div>
@@ -386,32 +418,6 @@ export default function LandingPage() {
           pointer-events: none;
         }
 
-        :global(.zephron-landing .hero-aurora) {
-          position: absolute;
-          inset: 10% 8%;
-          background: radial-gradient(circle at 30% 40%, rgba(34, 197, 94, 0.24), transparent 50%),
-            radial-gradient(circle at 70% 55%, rgba(34, 197, 94, 0.18), transparent 40%),
-            radial-gradient(circle at 50% 80%, rgba(15, 23, 42, 0.8), transparent 50%);
-          filter: blur(32px) saturate(1.1);
-          z-index: -1;
-        }
-
-        :global(.zephron-landing .hero-beam) {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            120deg,
-            rgba(34, 197, 94, 0.04) 0%,
-            rgba(34, 197, 94, 0.08) 20%,
-            rgba(34, 197, 94, 0.02) 50%,
-            transparent 70%
-          );
-          mix-blend-mode: screen;
-          opacity: 0.8;
-          z-index: -2;
-          animation: beamShift 12s ease-in-out infinite alternate;
-        }
-
         :global(.zephron-landing .hero-inner) {
           position: relative;
           max-width: var(--max-width);
@@ -473,47 +479,6 @@ export default function LandingPage() {
         :global(.zephron-landing .hero-center-subtitle) {
           font-size: 14px;
           color: var(--muted);
-        }
-
-        :global(.zephron-landing .hero-chip-row) {
-          display: inline-flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin: 16px auto 6px;
-          justify-content: center;
-        }
-
-        :global(.zephron-landing .hero-chip) {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          border: 1px solid rgba(34, 197, 94, 0.3);
-          background: rgba(0, 0, 0, 0.55);
-          box-shadow: 0 6px 32px rgba(34, 197, 94, 0.24);
-          font-size: 11px;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--text);
-          position: relative;
-          overflow: hidden;
-        }
-
-        :global(.zephron-landing .hero-chip::after) {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
-          transform: translateX(-120%);
-          animation: shimmer 6s ease-in-out infinite;
-        }
-
-        :global(.zephron-landing .hero-footnote) {
-          margin-top: 10px;
-          color: #d1d5db;
-          font-size: 12px;
-          letter-spacing: 0.08em;
         }
 
         :global(.zephron-landing .section) {
@@ -610,6 +575,48 @@ export default function LandingPage() {
           margin-top: 10px;
         }
 
+        :global(.zephron-landing .section-stack) {
+          margin-top: 28px;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 14px;
+        }
+
+        :global(.zephron-landing .section-card) {
+          border-radius: 16px;
+          border: 1px solid rgba(34, 197, 94, 0.35);
+          background: linear-gradient(145deg, rgba(2, 8, 4, 0.95), rgba(5, 5, 5, 0.92));
+          padding: 14px 16px;
+          box-shadow: 0 14px 46px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(34, 197, 94, 0.12);
+        }
+
+        :global(.zephron-landing .section-card-title) {
+          font-size: 13px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--accent-soft);
+          margin-bottom: 8px;
+        }
+
+        :global(.zephron-landing .section-card-text) {
+          font-size: 13px;
+          line-height: 1.6;
+          color: var(--muted);
+          margin-bottom: 10px;
+        }
+
+        :global(.zephron-landing .section-card-meta) {
+          font-size: 12px;
+          color: #e5e7eb;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          background: rgba(34, 197, 94, 0.08);
+          border: 1px solid rgba(34, 197, 94, 0.24);
+        }
+
         :global(.zephron-landing .section-pills-row) {
           margin-top: 28px;
           display: flex;
@@ -675,6 +682,44 @@ export default function LandingPage() {
           color: var(--accent-soft);
         }
 
+        :global(.zephron-landing .nl-list) {
+          margin-top: 10px;
+          display: grid;
+          gap: 6px;
+          color: #e5e7eb;
+          font-size: 12px;
+          text-align: left;
+          padding-left: 14px;
+          list-style: disc;
+        }
+
+        :global(.zephron-landing .badge-line) {
+          margin-top: 10px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(34, 197, 94, 0.28);
+          background: rgba(34, 197, 94, 0.06);
+          color: #e5e7eb;
+          font-size: 12px;
+        }
+
+        :global(.zephron-landing .micro-bar) {
+          margin-top: 12px;
+          display: grid;
+          gap: 6px;
+        }
+
+        :global(.zephron-landing .micro-bar span) {
+          display: block;
+          height: 4px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.8));
+          box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);
+        }
+
         :global(.zephron-landing .section::before),
         :global(.zephron-landing .section-alt::before) {
           content: "";
@@ -686,26 +731,6 @@ export default function LandingPage() {
           pointer-events: none;
         }
 
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-120%);
-          }
-          60% {
-            transform: translateX(120%);
-          }
-          100% {
-            transform: translateX(120%);
-          }
-        }
-
-        @keyframes beamShift {
-          0% {
-            transform: translateX(-6%);
-          }
-          100% {
-            transform: translateX(6%);
-          }
-        }
 
         @keyframes floatPulse {
           0% {
@@ -855,3 +880,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+

@@ -68,7 +68,7 @@ model Agent {
   deviceName   String    @map("device_name")
   userId       String?   @db.Uuid @map("user_id")
   osVersion    String    @map("os_version")
-  seymaVersion String    @map("seyma_version")
+  zephronVersion String    @map("zephron_version")
   onlineStatus String    @map("online_status")
   lastSeenAt   DateTime? @map("last_seen_at")
   tags         String[]  @default([])

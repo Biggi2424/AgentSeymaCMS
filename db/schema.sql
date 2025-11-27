@@ -1,12 +1,12 @@
--- Seyma Cloud - PostgreSQL Schema
+-- Zephron Cloud - PostgreSQL Schema
 -- Multi-tenant, vorbereitet für Tickets, Agents, Deployments und Service Store.
 
 -- Vorbereitung
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE SCHEMA IF NOT EXISTS seyma_cloud;
-SET search_path TO seyma_cloud, public;
+CREATE SCHEMA IF NOT EXISTS zephron_cloud;
+SET search_path TO zephron_cloud, public;
 
 -- 1) Tenants & Users
 CREATE TABLE tenants (
@@ -37,7 +37,7 @@ CREATE TABLE agents (
     device_name   TEXT NOT NULL,
     user_id       UUID REFERENCES users(id),
     os_version    TEXT NOT NULL,
-    seyma_version TEXT NOT NULL,
+    zephron_version TEXT NOT NULL,
     online_status TEXT NOT NULL CHECK (online_status IN ('online','offline')),
     last_seen_at  TIMESTAMPTZ,
     tags          TEXT[] NOT NULL DEFAULT '{}',
