@@ -1,11 +1,69 @@
-export default function StorePage() {
+type TenantType = "company" | "user";
+
+type PageProps = {
+  searchParams?: { tenantType?: string };
+};
+
+type StoreItem = {
+  name: string;
+  desc: string;
+  scope: "company" | "user" | "both";
+};
+
+const items: StoreItem[] = [
+  { name: "VPN Client", desc: "Corporate VPN mit SSO und Always-On.", scope: "company" },
+  { name: "M365 Apps", desc: "Office, Teams, OneDrive - lizensiert ueber Tenant.", scope: "both" },
+  { name: "Remote Assist", desc: "Fernunterstuetzung durch Helpdesk.", scope: "both" },
+  { name: "Adobe Reader", desc: "PDF Viewer fuer alle Geraete.", scope: "both" },
+  { name: "Privat Backup", desc: "Backup fuer private Devices.", scope: "user" },
+  { name: "Line-of-Business App", desc: "Spezielle App fuer Fachabteilungen.", scope: "company" },
+];
+
+export default function StorePage({ searchParams }: PageProps) {
+  const tenantType: TenantType =
+    searchParams?.tenantType === "user" ? "user" : "company";
+  const viewLabel = tenantType === "company" ? "Company" : "User";
+  const visibleItems = items.filter(
+    (item) => item.scope === "both" || item.scope === tenantType,
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-50">Service Store</h1>
-      <p className="text-sm text-zinc-400">
-        Self-Service-Store fuer Software und Services. Im MVP kannst du hier
-        ein einfaches Grid mit Demo-Items anzeigen.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-50">
+            Service Store ({viewLabel} Ansicht)
+          </h1>
+          <p className="text-sm text-zinc-400">
+            {tenantType === "company"
+              ? "Self-Service Katalog fuer alle Nutzer mit Abteilungs-Scopes."
+              : "Nur Angebote, die fuer dich freigegeben sind."}
+          </p>
+        </div>
+        <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+          Dev Ansicht: {viewLabel}
+        </span>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+        {visibleItems.map((item) => (
+          <div
+            key={item.name}
+            className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-zinc-50">{item.name}</p>
+              <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-400">
+                {item.scope === "both" ? "alle" : item.scope}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-zinc-400">{item.desc}</p>
+            <button className="mt-3 w-full rounded-full bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400">
+              {tenantType === "company" ? "Zu Deployment hinzufuegen" : "Installieren"}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
