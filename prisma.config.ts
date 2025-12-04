@@ -3,10 +3,13 @@
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
+const seedCommand = "ts-node --project tsconfig.seed.json --transpile-only prisma/seed.ts";
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    seed: seedCommand,
   },
   datasource: {
     url: env("DATABASE_URL"),

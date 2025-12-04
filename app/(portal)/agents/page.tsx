@@ -1,46 +1,53 @@
+import { AgentActions } from "@/components/agents/AgentActions";
 import { getCurrentUser } from "@/lib/auth";
+import { getDb } from "@/lib/db";
 
-const userDevices = [
-  {
-    name: "DESKTOP-XYZ",
-    type: "PC",
-    os: "Windows 11 Pro 23H2",
-    agentVersion: "1.4.2",
-    status: "online",
-    lastSeenAt: "2025-12-03T08:42:00Z",
-    tasks: ["Update scheduled (18:00)", "Skill bundle installing"],
-    recent: ["Opened Edge", "Moved PDF", "Ran Word diagnostics"],
-  },
-  {
-    name: "LAPTOP-HOME",
-    type: "Laptop",
-    os: "Windows 10 22H2",
-    agentVersion: "1.3.9",
-    status: "offline",
-    lastSeenAt: "2025-12-02T22:10:00Z",
-    tasks: ["Reconnect agent recommended"],
-    recent: ["Restarted Teams", "Cleared Outlook cache"],
-  },
-];
-
-const companyFleet = [
-  { name: "VDMA-LAP-023", owner: "IT Ops", os: "Windows 11", status: "online" },
-  { name: "VDMA-LAP-017", owner: "Sales", os: "Windows 10", status: "offline" },
-  { name: "VDMA-SRV-004", owner: "Datacenter", os: "Windows Server 2022", status: "online" },
-  { name: "VDMA-LAP-031", owner: "Support", os: "Windows 11", status: "online" },
-];
+type AgentWithRelations = {
+  id: string;
+  deviceName: string;
+  osVersion: string;
+  neyraqVersion: string;
+  onlineStatus: string;
+  lastSeenAt: Date | null;
+  tags: string[];
+  user: { displayName: string } | null;
+  events: { id: bigint; eventType: string; message: string; createdAt: Date }[];
+};
 
 export default async function AgentsPage() {
   const session = await getCurrentUser();
+  const db = getDb();
+  const agents = (await db.agent.findMany({
+    where:
+      session.tenantType === "user"
+        ? { tenantId: session.tenantId, userId: session.id }
+        : { tenantId: session.tenantId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      events: { orderBy: { createdAt: "desc" }, take: 3 },
+      user: { select: { displayName: true } },
+    },
+  })) as AgentWithRelations[];
+
+  const onlineCount = agents.filter((a) => a.onlineStatus === "online").length;
+  const offlineCount = agents.length - onlineCount;
 
   if (session.tenantType === "user") {
-    return <UserDevices />;
+    return <UserDevices agents={agents} onlineCount={onlineCount} offlineCount={offlineCount} />;
   }
 
-  return <CompanyFleet />;
+  return <CompanyFleet agents={agents} onlineCount={onlineCount} offlineCount={offlineCount} />;
 }
 
-function UserDevices() {
+function UserDevices({
+  agents,
+  onlineCount,
+  offlineCount,
+}: {
+  agents: AgentWithRelations[];
+  onlineCount: number;
+  offlineCount: number;
+}) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -53,70 +60,69 @@ function UserDevices() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <StatCard label="Online" value="1" tone="emerald" />
-        <StatCard label="Offline" value="1" tone="amber" />
-        <StatCard label="Pending tasks" value="2" tone="cyan" />
+        <StatCard label="Online" value={onlineCount.toString()} tone="emerald" />
+        <StatCard label="Offline" value={offlineCount.toString()} tone="amber" />
+        <StatCard label="Agents total" value={agents.length.toString()} tone="cyan" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {userDevices.map((device) => (
-          <div
-            key={device.name}
-            className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-          >
+        {agents.map((agent) => (
+          <div key={agent.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">{device.type}</p>
-                <p className="text-lg font-semibold text-zinc-50">{device.name}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">Endpoint</p>
+                <p className="text-lg font-semibold text-zinc-50">{agent.deviceName}</p>
                 <p className="text-xs text-zinc-400">
-                  {device.os} · Agent {device.agentVersion}
+                  {agent.osVersion} · Agent {agent.neyraqVersion}
                 </p>
               </div>
               <span
                 className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                  device.status === "online"
+                  agent.onlineStatus === "online"
                     ? "bg-emerald-500/10 text-emerald-300"
                     : "bg-amber-500/10 text-amber-300"
                 }`}
               >
-                {device.status === "online" ? "Online" : "Offline"}
+                {agent.onlineStatus === "online" ? "Online" : "Offline"}
               </span>
             </div>
             <p className="mt-2 text-xs text-zinc-400">
-              Last seen: {new Date(device.lastSeenAt).toLocaleString("de-DE")}
+              Last seen: {agent.lastSeenAt ? new Date(agent.lastSeenAt).toLocaleString("de-DE") : "n/a"}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-300">
-                <button className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 hover:border-emerald-500/40 hover:text-emerald-200">
-                  Show details
-                </button>
-                <button className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 hover:border-emerald-500/40 hover:text-emerald-200">
-                  Reconnect agent
-                </button>
-                <button className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 hover:border-rose-500/40 hover:text-rose-200">
-                  Remove device
-                </button>
-              </div>
+              <AgentActions agentId={agent.id} />
+            </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="rounded-xl border border-zinc-800 bg-black/40 p-3">
-                <p className="text-xs text-zinc-400">Recent actions</p>
+                <p className="text-xs text-zinc-400">Recent events</p>
                 <ul className="mt-2 space-y-1 text-xs text-zinc-200">
-                  {device.recent.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
+                  {agent.events.length === 0 && <li className="text-zinc-500">No events yet</li>}
+                  {agent.events.map((event) => (
+                    <li key={event.id.toString()} className="flex items-start gap-2">
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      {item}
+                      <span>
+                        <span className="font-semibold text-zinc-100">{event.eventType}</span>{" "}
+                        <span className="text-zinc-400">{event.message}</span>
+                        <span className="block text-[10px] text-zinc-500">
+                          {new Date(event.createdAt).toLocaleString("de-DE")}
+                        </span>
+                      </span>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-black/40 p-3">
-                <p className="text-xs text-zinc-400">Pending tasks</p>
-                <ul className="mt-2 space-y-1 text-xs text-zinc-200">
-                  {device.tasks.map((task) => (
-                    <li key={task} className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
-                      {task}
+                <p className="text-xs text-zinc-400">Tags</p>
+                <ul className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-200">
+                  {agent.tags.length === 0 && <li className="text-zinc-500">No tags</li>}
+                  {agent.tags.map((tag) => (
+                    <li
+                      key={tag}
+                      className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-100"
+                    >
+                      {tag}
                     </li>
                   ))}
                 </ul>
@@ -129,7 +135,15 @@ function UserDevices() {
   );
 }
 
-function CompanyFleet() {
+function CompanyFleet({
+  agents,
+  onlineCount,
+  offlineCount,
+}: {
+  agents: AgentWithRelations[];
+  onlineCount: number;
+  offlineCount: number;
+}) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -141,38 +155,38 @@ function CompanyFleet() {
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
-        <StatCard label="Agents online" value="32" tone="emerald" />
-        <StatCard label="Agents offline" value="5" tone="amber" />
-        <StatCard label="Pending Updates" value="11" tone="cyan" />
+        <StatCard label="Agents online" value={onlineCount.toString()} tone="emerald" />
+        <StatCard label="Agents offline" value={offlineCount.toString()} tone="amber" />
+        <StatCard label="Agents total" value={agents.length.toString()} tone="cyan" />
       </div>
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-zinc-800 bg-zinc-900/60 text-xs text-zinc-400">
             <tr>
               <th className="px-4 py-3 font-medium">Gerät</th>
-              <th className="px-4 py-3 font-medium">Owner / Dept</th>
+              <th className="px-4 py-3 font-medium">Owner</th>
               <th className="px-4 py-3 font-medium">OS</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
-            {companyFleet.map((device) => (
+            {agents.map((agent) => (
               <tr
-                key={device.name}
+                key={agent.id}
                 className="border-t border-zinc-800/80 text-zinc-200 hover:bg-zinc-900/60"
               >
-                <td className="px-4 py-3 font-semibold text-zinc-50">{device.name}</td>
-                <td className="px-4 py-3 text-xs text-zinc-400">{device.owner}</td>
-                <td className="px-4 py-3 text-xs text-zinc-400">{device.os}</td>
+                <td className="px-4 py-3 font-semibold text-zinc-50">{agent.deviceName}</td>
+                <td className="px-4 py-3 text-xs text-zinc-400">{agent.user?.displayName ?? "Unassigned"}</td>
+                <td className="px-4 py-3 text-xs text-zinc-400">{agent.osVersion}</td>
                 <td className="px-4 py-3 text-xs">
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-[0.7rem] font-semibold ${
-                      device.status === "online"
+                      agent.onlineStatus === "online"
                         ? "bg-emerald-500/10 text-emerald-300"
                         : "bg-amber-500/10 text-amber-300"
                     }`}
                   >
-                    {device.status}
+                    {agent.onlineStatus}
                   </span>
                 </td>
               </tr>

@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, type ReactNode, type SVGProps } from "react";
 import type { SessionUser } from "@/lib/auth";
 
-type Audience = "user" | "company_admin" | "company_agent";
+type Audience = "user" | "company";
 
 type NavItem = {
   href: string;
@@ -16,26 +16,27 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Cockpit", Icon: GaugeIcon, audiences: ["user", "company_admin", "company_agent"] },
+  { href: "/dashboard", label: "Cockpit", Icon: GaugeIcon, audiences: ["user", "company"] },
   {
     href: "/agents",
     label: "Fleet",
     labelForUser: "My Devices",
     Icon: MonitorIcon,
-    audiences: ["user", "company_admin", "company_agent"],
+    audiences: ["user", "company"],
   },
   {
     href: "/software",
     label: "Software Distribution",
     Icon: PackageIcon,
-    audiences: ["company_admin"],
+    audiences: ["company"],
   },
-  { href: "/store", label: "Service Store", Icon: StoreIcon, audiences: ["company_admin", "company_agent"] },
-  { href: "/tickets", label: "Tickets", Icon: TicketIcon, audiences: ["company_admin", "company_agent"] },
+  { href: "/store", label: "Service Store", Icon: StoreIcon, audiences: ["company"] },
+  { href: "/tickets", label: "Tickets", Icon: TicketIcon, audiences: ["company"] },
 ];
 
 export function Shell({ children, session }: { children: ReactNode; session: SessionUser }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -44,10 +45,7 @@ export function Shell({ children, session }: { children: ReactNode; session: Ses
     if (session.tenantType === "user") {
       return item.audiences.includes("user");
     }
-    if (session.personaRole === "company_admin") {
-      return item.audiences.includes("company_admin");
-    }
-    return item.audiences.includes("company_agent");
+    return item.audiences.includes("company");
   };
 
   const navHref = (href: string) => ({ pathname: href });
@@ -145,12 +143,17 @@ export function Shell({ children, session }: { children: ReactNode; session: Ses
               >
                 Language: English
               </Link>
-              <Link
-                href="/login"
+              <button
+                type="button"
+                onClick={async () => {
+                  await fetch("/api/auth/logout", { method: "POST" });
+                  router.push("/login");
+                  router.refresh();
+                }}
                 className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800"
               >
                 Sign out
-              </Link>
+              </button>
             </div>
           )}
         </div>

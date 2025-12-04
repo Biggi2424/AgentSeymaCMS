@@ -6,12 +6,21 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  owner
+  admin
+  operator
+  viewer
+}
+
 enum TicketStatus {
   new
   in_progress
   waiting
   resolved
   closed
+
+  @@map("ticket_status")
 }
 
 enum TicketPriority {
@@ -19,13 +28,62 @@ enum TicketPriority {
   normal
   high
   critical
+
+  @@map("ticket_priority")
 }
 
-enum UserRole {
-  owner
-  admin
-  operator
-  viewer
+enum TicketSource {
+  portal
+  email
+  agent
+}
+
+enum PackageType {
+  msi
+  exe
+  script
+}
+
+enum RebootBehavior {
+  never
+  if_needed
+  always
+}
+
+enum DeploymentRolloutStrategy {
+  all_at_once
+  ring
+  scheduled
+}
+
+enum DeploymentStatus {
+  pending
+  running
+  completed
+  cancelled
+  failed
+}
+
+enum DeploymentResultStatus {
+  pending
+  running
+  success
+  failed
+  skipped
+}
+
+enum CatalogItemType {
+  software
+  service
+}
+
+enum CatalogRequestStatus {
+  requested
+  in_review
+  approved
+  rejected
+  fulfilled
+  cancelled
 }
 
 model Tenant {
@@ -34,82 +92,328 @@ model Tenant {
   slug      String   @unique
   createdAt DateTime @default(now()) @map("created_at")
 
-  users   User[]
-  agents  Agent[]
-  tickets Ticket[]
+  users              User[]
+  agents             Agent[]
+  agentEvents        AgentEvent[]
+  tickets            Ticket[]
+  ticketComments     TicketComment[]
+  ticketAttachments  TicketAttachment[]
+  packages           Package[]
+  deviceGroups       DeviceGroup[]
+  deviceGroupMembers DeviceGroupMember[]
+  deployments        Deployment[]
+  deploymentResults  DeploymentResult[]
+  catalogItems       CatalogItem[]
+  catalogRequests    CatalogRequest[]
+  apiKeys            ApiKey[]
 
   @@map("tenants")
 }
 
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @db.Uuid @map("tenant_id")
-  email        String
-  displayName  String    @map("display_name")
-  role         UserRole
-  authProvider String    @default("local") @map("auth_provider")
-  authSubjectId String?  @map("auth_subject_id")
-  passwordHash String    @map("password_hash")
-  plan         String    @default("trial")
-  trialExpiresAt DateTime? @map("trial_expires_at")
-  tokensUsedPeriod Int   @default(0) @map("tokens_used_period")
-  tokensQuotaPeriod Int  @default(50000) @map("tokens_quota_period")
-  throttleState String   @default("normal") @map("throttle_state")
-  tenantType    String   @default("user") @map("tenant_type")
-  personaRole   String   @default("user") @map("persona_role")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  lastLoginAt  DateTime? @map("last_login_at")
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  email             String    @db.Citext
+  displayName       String    @map("display_name")
+  role              UserRole
+  authProvider      String    @default("local") @map("auth_provider")
+  authSubjectId     String?   @map("auth_subject_id")
+  passwordHash      String    @map("password_hash")
+  plan              String    @default("trial")
+  trialExpiresAt    DateTime? @map("trial_expires_at")
+  tokensUsedPeriod  Int       @default(0) @map("tokens_used_period")
+  tokensQuotaPeriod Int       @default(50000) @map("tokens_quota_period")
+  throttleState     String    @default("normal") @map("throttle_state")
+  tenantType        String    @default("user") @map("tenant_type")
+  personaRole       String    @default("user") @map("persona_role")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  lastLoginAt       DateTime? @map("last_login_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
-  ticketsRequested Ticket[] @relation("TicketRequester")
-  ticketsAssigned  Ticket[] @relation("TicketAssignee")
-  agents           Agent[]
+
+  agents              Agent[]
+  ticketsRequested    Ticket[]           @relation("TicketRequester")
+  ticketsAssigned     Ticket[]           @relation("TicketAssignee")
+  ticketComments      TicketComment[]    @relation("TicketCommentAuthor")
+  ticketAttachments   TicketAttachment[] @relation("AttachmentUploader")
+  packagesCreated     Package[]          @relation("PackageCreatedBy")
+  deploymentsCreated  Deployment[]       @relation("DeploymentCreatedBy")
+  catalogItemsCreated CatalogItem[]      @relation("CatalogItemCreatedBy")
+  catalogRequests     CatalogRequest[]   @relation("CatalogRequestRequester")
+  apiKeysCreated      ApiKey[]           @relation("ApiKeyCreatedBy")
 
   @@unique([tenantId, email], map: "users_tenant_email_uq")
   @@map("users")
 }
 
 model Agent {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @db.Uuid @map("tenant_id")
-  deviceName   String    @map("device_name")
-  userId       String?   @db.Uuid @map("user_id")
-  osVersion    String    @map("os_version")
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  deviceName    String    @map("device_name")
+  userId        String?   @map("user_id") @db.Uuid
+  osVersion     String    @map("os_version")
   neyraqVersion String    @map("neyraq_version")
-  onlineStatus String    @map("online_status")
-  lastSeenAt   DateTime? @map("last_seen_at")
-  tags         String[]  @default([])
-  createdAt    DateTime  @default(now()) @map("created_at")
+  onlineStatus  String    @map("online_status")
+  lastSeenAt    DateTime? @map("last_seen_at")
+  tags          String[]  @default([])
+  createdAt     DateTime  @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User?  @relation(fields: [userId], references: [id])
+  tenant                 Tenant              @relation(fields: [tenantId], references: [id])
+  user                   User?               @relation(fields: [userId], references: [id])
+  events                 AgentEvent[]
+  deploymentResults      DeploymentResult[]
+  deviceGroupMemberships DeviceGroupMember[]
+  catalogRequests        CatalogRequest[]
+  ticketComments         TicketComment[]     @relation("TicketCommentAgent")
 
   @@index([tenantId], map: "agents_tenant_idx")
   @@index([tenantId, deviceName], map: "agents_tenant_hostname")
   @@map("agents")
 }
 
-model Ticket {
-  id                String         @id @default(uuid()) @db.Uuid
-  tenantId          String         @db.Uuid @map("tenant_id")
-  humanId           String         @map("human_id")
-  title             String
-  description       String         @default("")
-  status            TicketStatus   @default(new)
-  priority          TicketPriority @default(normal)
-  requesterUserId   String?        @db.Uuid @map("requester_user_id")
-  assigneeUserId    String?        @db.Uuid @map("assignee_user_id")
-  source            String
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @default(now()) @map("updated_at")
-  closedAt          DateTime?      @map("closed_at")
+model AgentEvent {
+  id          BigInt   @id @default(autoincrement())
+  tenantId    String   @map("tenant_id") @db.Uuid
+  agentId     String   @map("agent_id") @db.Uuid
+  eventType   String   @map("event_type")
+  severity    String   @default("info")
+  message     String
+  payloadJson Json?    @map("payload_json")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  tenant          Tenant @relation(fields: [tenantId], references: [id])
-  requesterUser   User?  @relation("TicketRequester", fields: [requesterUserId], references: [id])
-  assigneeUser    User?  @relation("TicketAssignee", fields: [assigneeUserId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  agent  Agent  @relation(fields: [agentId], references: [id])
+
+  @@index([agentId, createdAt], map: "agent_events_agent_idx")
+  @@index([tenantId, createdAt], map: "agent_events_tenant_idx")
+  @@map("agent_events")
+}
+
+model Ticket {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  humanId         String         @map("human_id")
+  title           String
+  description     String         @default("")
+  status          TicketStatus   @default(new)
+  priority        TicketPriority @default(normal)
+  requesterUserId String?        @map("requester_user_id") @db.Uuid
+  assigneeUserId  String?        @map("assignee_user_id") @db.Uuid
+  source          TicketSource
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @map("updated_at")
+  closedAt        DateTime?      @map("closed_at")
+
+  tenant          Tenant             @relation(fields: [tenantId], references: [id])
+  requesterUser   User?              @relation("TicketRequester", fields: [requesterUserId], references: [id])
+  assigneeUser    User?              @relation("TicketAssignee", fields: [assigneeUserId], references: [id])
+  comments        TicketComment[]
+  attachments     TicketAttachment[]
+  catalogRequests CatalogRequest[]
 
   @@unique([tenantId, humanId], map: "tickets_tenant_human_id_uq")
   @@index([tenantId, status, createdAt], map: "tickets_tenant_status_idx")
   @@index([requesterUserId, createdAt], map: "tickets_requester_idx")
   @@map("tickets")
+}
+
+model TicketComment {
+  id           BigInt   @id @default(autoincrement())
+  tenantId     String   @map("tenant_id") @db.Uuid
+  ticketId     String   @map("ticket_id") @db.Uuid
+  authorUserId String?  @map("author_user_id") @db.Uuid
+  agentId      String?  @map("agent_id") @db.Uuid
+  body         String
+  isInternal   Boolean  @default(false) @map("is_internal")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id])
+  ticket     Ticket @relation(fields: [ticketId], references: [id])
+  authorUser User?  @relation("TicketCommentAuthor", fields: [authorUserId], references: [id])
+  agent      Agent? @relation("TicketCommentAgent", fields: [agentId], references: [id])
+
+  @@index([ticketId, createdAt], map: "ticket_comments_ticket_idx")
+  @@map("ticket_comments")
+}
+
+model TicketAttachment {
+  id            BigInt   @id @default(autoincrement())
+  tenantId      String   @map("tenant_id") @db.Uuid
+  ticketId      String   @map("ticket_id") @db.Uuid
+  fileName      String   @map("file_name")
+  contentType   String   @map("content_type")
+  fileSizeBytes BigInt   @map("file_size_bytes")
+  storageUrl    String   @map("storage_url")
+  uploadedBy    String?  @map("uploaded_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  uploader User?  @relation("AttachmentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([ticketId], map: "ticket_attachments_ticket_idx")
+  @@map("ticket_attachments")
+}
+
+model Package {
+  id                String         @id @default(uuid()) @db.Uuid
+  tenantId          String         @map("tenant_id") @db.Uuid
+  name              String
+  version           String
+  type              PackageType
+  installCommand    String         @map("install_command")
+  uninstallCommand  String?        @map("uninstall_command")
+  rebootBehavior    RebootBehavior @map("reboot_behavior")
+  fileUrl           String         @map("file_url")
+  detectionRuleJson Json?          @map("detection_rule_json")
+  createdBy         String?        @map("created_by") @db.Uuid
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @default(now()) @map("updated_at")
+
+  tenant             Tenant        @relation(fields: [tenantId], references: [id])
+  creator            User?         @relation("PackageCreatedBy", fields: [createdBy], references: [id])
+  deployments        Deployment[]
+  linkedCatalogItems CatalogItem[] @relation("LinkedPackage")
+
+  @@index([tenantId, name], map: "packages_tenant_name_idx")
+  @@map("packages")
+}
+
+model DeviceGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String
+  description String   @default("")
+  isDynamic   Boolean  @default(false) @map("is_dynamic")
+  queryJson   Json?    @map("query_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id])
+  members     DeviceGroupMember[]
+  deployments Deployment[]
+
+  @@index([tenantId, name], map: "device_groups_tenant_idx")
+  @@map("device_groups")
+}
+
+model DeviceGroupMember {
+  deviceGroupId String @map("device_group_id") @db.Uuid
+  agentId       String @map("agent_id") @db.Uuid
+
+  deviceGroup DeviceGroup @relation(fields: [deviceGroupId], references: [id])
+  agent       Agent       @relation(fields: [agentId], references: [id])
+  tenant      Tenant?     @relation(fields: [tenantId], references: [id])
+  tenantId    String?     @db.Uuid
+
+  @@id([deviceGroupId, agentId])
+  @@map("device_group_members")
+}
+
+model Deployment {
+  id              String                    @id @default(uuid()) @db.Uuid
+  tenantId        String                    @map("tenant_id") @db.Uuid
+  packageId       String                    @map("package_id") @db.Uuid
+  deviceGroupId   String                    @map("device_group_id") @db.Uuid
+  name            String
+  rolloutStrategy DeploymentRolloutStrategy @map("rollout_strategy")
+  ringConfigJson  Json?                     @map("ring_config_json")
+  startTime       DateTime?                 @map("start_time")
+  status          DeploymentStatus          @default(pending)
+  createdBy       String?                   @map("created_by") @db.Uuid
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @default(now()) @map("updated_at")
+
+  tenant          Tenant             @relation(fields: [tenantId], references: [id])
+  package         Package            @relation(fields: [packageId], references: [id])
+  deviceGroup     DeviceGroup        @relation(fields: [deviceGroupId], references: [id])
+  creator         User?              @relation("DeploymentCreatedBy", fields: [createdBy], references: [id])
+  results         DeploymentResult[]
+  catalogRequests CatalogRequest[]
+
+  @@index([tenantId, createdAt], map: "deployments_tenant_idx")
+  @@map("deployments")
+}
+
+model DeploymentResult {
+  id           BigInt                 @id @default(autoincrement())
+  deploymentId String                 @map("deployment_id") @db.Uuid
+  tenantId     String                 @map("tenant_id") @db.Uuid
+  agentId      String                 @map("agent_id") @db.Uuid
+  status       DeploymentResultStatus
+  lastUpdateAt DateTime               @default(now()) @map("last_update_at")
+  logUrl       String?                @map("log_url")
+  lastMessage  String?                @map("last_message")
+
+  deployment Deployment @relation(fields: [deploymentId], references: [id])
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  agent      Agent      @relation(fields: [agentId], references: [id])
+
+  @@index([deploymentId, status], map: "deployment_results_deployment_idx")
+  @@index([agentId, lastUpdateAt], map: "deployment_results_agent_idx")
+  @@map("deployment_results")
+}
+
+model CatalogItem {
+  id               String          @id @default(uuid()) @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  type             CatalogItemType
+  title            String
+  description      String          @default("")
+  iconUrl          String?         @map("icon_url")
+  category         String
+  requiresApproval Boolean         @default(false) @map("requires_approval")
+  linkedPackageId  String?         @map("linked_package_id") @db.Uuid
+  linkedWorkflow   String?         @map("linked_workflow")
+  isActive         Boolean         @default(true) @map("is_active")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  createdBy        String?         @map("created_by") @db.Uuid
+
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  linkedPackage Package?         @relation("LinkedPackage", fields: [linkedPackageId], references: [id])
+  creator       User?            @relation("CatalogItemCreatedBy", fields: [createdBy], references: [id])
+  requests      CatalogRequest[]
+
+  @@index([tenantId, category, isActive], map: "catalog_items_tenant_idx")
+  @@map("catalog_items")
+}
+
+model CatalogRequest {
+  id              String               @id @default(uuid()) @db.Uuid
+  tenantId        String               @map("tenant_id") @db.Uuid
+  catalogItemId   String               @map("catalog_item_id") @db.Uuid
+  requesterUserId String?              @map("requester_user_id") @db.Uuid
+  agentId         String?              @map("agent_id") @db.Uuid
+  status          CatalogRequestStatus @default(requested)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @default(now()) @map("updated_at")
+  ticketId        String?              @map("ticket_id") @db.Uuid
+  deploymentId    String?              @map("deployment_id") @db.Uuid
+
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id])
+  requesterUser User?       @relation("CatalogRequestRequester", fields: [requesterUserId], references: [id])
+  agent         Agent?      @relation(fields: [agentId], references: [id])
+  ticket        Ticket?     @relation(fields: [ticketId], references: [id])
+  deployment    Deployment? @relation(fields: [deploymentId], references: [id])
+
+  @@index([tenantId, status, createdAt], map: "catalog_requests_tenant_status_idx")
+  @@map("catalog_requests")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  label      String
+  secretHash String    @map("secret_hash")
+  scopes     String[]  @default([])
+  createdBy  String?   @map("created_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+  isRevoked  Boolean   @default(false) @map("is_revoked")
+
+  tenant  Tenant @relation(fields: [tenantId], references: [id])
+  creator User?  @relation("ApiKeyCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([tenantId, isRevoked], map: "api_keys_tenant_idx")
+  @@map("api_keys")
 }

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { randomBytes } from "crypto";
-import { getDb } from "@/lib/db";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
+import { getDb } from "@/lib/db";
+import { randomBytes } from "crypto";
 
 function slugify(input: string) {
   return input
@@ -33,31 +33,35 @@ export async function POST(request: NextRequest) {
   const slugBase = slugify(email.split("@")[0] || displayName) || "tenant";
   const slug = `${slugBase}-${randomBytes(3).toString("hex")}`;
 
-  const tenant = await db.tenant.create({
-    data: {
-      name: displayName,
-      slug,
-    },
-  });
+  try {
+    const tenant = await db.tenant.create({
+      data: {
+        name: displayName,
+        slug,
+      },
+    });
 
-  const user = await db.user.create({
-    data: {
-      tenantId: tenant.id,
-      email,
-      displayName,
-      role: "owner",
-      authProvider: "local",
-      passwordHash: hashPassword(password),
-      plan: "trial",
-      trialExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      tokensQuotaPeriod: 50000,
-      tokensUsedPeriod: 0,
-      throttleState: "normal",
-      tenantType: "user",
-      personaRole: "user",
-    },
-  });
+    const user = await db.user.create({
+      data: {
+        tenantId: tenant.id,
+        email,
+        displayName,
+        role: "owner",
+        authProvider: "local",
+        passwordHash: hashPassword(password),
+        plan: "trial",
+        trialExpiresAt: new Date("2025-12-31T00:00:00Z"),
+        tokensQuotaPeriod: 50000,
+        tokensUsedPeriod: 0,
+        throttleState: "normal",
+        tenantType: "user",
+        personaRole: "user",
+      },
+    });
 
-  await setSessionCookie(user.id);
-  return NextResponse.json({ ok: true }, { status: 201 });
+    await setSessionCookie(user.id);
+    return NextResponse.json({ ok: true }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
+  }
 }

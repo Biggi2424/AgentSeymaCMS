@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Neyraq Cloud – Portal (Product Build)
 
-## Getting Started
+- Next.js App Router + Prisma + Postgres (no demo shortcuts, no fake data in UI).
+- DB schema lives in `prisma/schema.prisma` and matches `db/schema.sql` (agents, tickets, deployments, catalog, API keys, …).
+- Seeds provide reproducible, realistic tenants/users/devices/tickets/deployments/catalog data.
 
-First, run the development server:
+### Environment
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- `.env` must include `DATABASE_URL` pointing to a reachable Postgres instance.
+- `AUTH_SECRET` should be set (cookie HMAC). The default in dev is insecure.
+
+### Prisma / DB
+
+```
+npm run prisma -- db push   # sync schema to DATABASE_URL
+npm run prisma -- generate  # build client
+npm run seed                # seed Postgres with product-grade fixtures
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Seeded data (after `npm run seed`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tenants
+- Aurora Personal Workspace (slug `aurora-personal`)
+- Helios Manufacturing GmbH (slug `helios-manufacturing`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Users (all auth_provider=local, passwords hashed via scrypt)
+- Personal: `user@personal.local` / `ChangeMe!2025` (tenant_type=user, persona_role=user)
+- Company admin: `admin@helios.local` / `AdminHelios#2025` (tenant_type=company, persona_role=company_admin)
+- Company agent: `agent@helios.local` / `AgentHelios#2025` (tenant_type=company, persona_role=company_agent)
 
-## Learn More
+Artifacts
+- Agents: 1 personal (`AURORA-LAPTOP`), 2 company (`HEL-CAD-051`, `HEL-EDGE-007`) with events/tags.
+- Tickets: VPN/connectivity, patch validation, onboarding, personal backup check.
+- Packages: CAD Suite 2024.4, Windows Hardening Baseline.
+- Deployments: CAD rollout (ring), Factory baseline refresh.
+- Device groups: Design Laptops, Factory Floor - Line A.
+- Catalog items/requests: VPN access, CAD add-ons, laptop health check.
+- API keys: ServiceNow sync (company), PowerBI usage export (personal).
 
-To learn more about Next.js, take a look at the following resources:
+### Key commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+npm run dev       # start Next.js (uses DATABASE_URL)
+npm run lint      # lint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Auth: login/registration work against `users` with server-side validation; sessions stored in an HTTP-only cookie.
+- Actions (tickets, deployments, catalog requests, agent commands, profile/password updates) all persist to Postgres—no stubs.

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { getDb } from "@/lib/db";
+import { CreateTicketForm } from "@/components/tickets/CreateTicketForm";
 import { getCurrentUser } from "@/lib/auth";
+import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -22,34 +23,23 @@ export default async function TicketsPage() {
     take: 100,
   });
 
+  const open = tickets.filter((t) => t.status === "new" || t.status === "in_progress" || t.status === "waiting").length;
+  const resolved = tickets.filter((t) => t.status === "resolved" || t.status === "closed").length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-50">Tickets</h1>
-          <p className="text-sm text-zinc-400">
-            All tenant tickets with full status, priority, and source context.
-          </p>
+          <p className="text-sm text-zinc-400">Live aus der tickets-Tabelle, keine Stubs.</p>
         </div>
-        <button className="rounded-full bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white">
-          Neues Ticket
-        </button>
+        <CreateTicketForm />
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs text-zinc-400">Tickets loaded</p>
-          <p className="text-2xl font-semibold text-zinc-50">{tickets.length}</p>
-          <p className="text-xs text-zinc-500">tenant total</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs text-zinc-400">Status</p>
-          <p className="text-sm text-zinc-300">New / In progress / Resolved</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs text-zinc-400">Linked devices</p>
-          <p className="text-sm text-zinc-300">Shown in ticket detail view</p>
-        </div>
+        <StatCard label="Tickets gesamt" value={tickets.length.toString()} />
+        <StatCard label="Offen / In Progress" value={open.toString()} />
+        <StatCard label="Gelöst / Geschlossen" value={resolved.toString()} />
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
@@ -87,9 +77,7 @@ export default async function TicketsPage() {
                     {ticket.priority}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs capitalize text-zinc-400">
-                  {ticket.source}
-                </td>
+                <td className="px-4 py-3 text-xs capitalize text-zinc-400">{ticket.source}</td>
                 <td className="px-4 py-3 text-xs text-zinc-400">
                   {ticket.createdAt.toLocaleString("de-DE")}
                 </td>
@@ -97,10 +85,7 @@ export default async function TicketsPage() {
             ))}
             {tickets.length === 0 && (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-6 text-center text-xs text-zinc-500"
-                >
+                <td colSpan={5} className="px-4 py-6 text-center text-xs text-zinc-500">
                   No tickets for this tenant yet.
                 </td>
               </tr>
@@ -108,6 +93,15 @@ export default async function TicketsPage() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+      <p className="text-xs text-zinc-400">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-zinc-50">{value}</p>
     </div>
   );
 }
