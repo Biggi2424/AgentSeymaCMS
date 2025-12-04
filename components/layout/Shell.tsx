@@ -108,13 +108,11 @@ export function Shell({ children, session }: { children: ReactNode; session: Ses
             );
           })}
         </nav>
-        <div className="mt-auto w-full border-t border-zinc-800 pt-4" ref={menuRef}>
+        <div className="relative mt-auto w-full border-t border-zinc-800 pt-4" ref={menuRef}>
           <button
             type="button"
             onClick={() => setProfileOpen((v) => !v)}
-            className={`flex w-full items-center gap-3 rounded-xl bg-zinc-900 px-3 py-3 text-left text-base font-semibold text-zinc-100 transition-transform duration-150 ${
-              profileOpen ? "scale-105" : "hover:scale-105"
-            }`}
+            className="group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-base font-semibold text-zinc-100 transition-all duration-150 hover:bg-zinc-900"
             title="Profile"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-sm font-semibold text-emerald-950">
@@ -128,19 +126,31 @@ export function Shell({ children, session }: { children: ReactNode; session: Ses
             )}
           </button>
           {profileOpen && (
-            <div className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-zinc-100 shadow-lg">
-              <button className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">
+            <div className="absolute bottom-full left-0 right-0 mb-2 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-zinc-100 shadow-lg">
+              <Link
+                href="/settings"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800"
+              >
                 Settings
-              </button>
-              <button className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">
-                Billing
-              </button>
-              <button className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">
+              </Link>
+              <Link
+                href="/usage"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800"
+              >
+                Billing & Usage
+              </Link>
+              <Link
+                href="/settings?section=language"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800"
+              >
                 Language: English
-              </button>
-              <button className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">
+              </Link>
+              <Link
+                href="/login"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800"
+              >
                 Sign out
-              </button>
+              </Link>
             </div>
           )}
         </div>
@@ -154,14 +164,7 @@ export function Shell({ children, session }: { children: ReactNode; session: Ses
           >
             <MenuIcon className="h-5 w-5" />
           </button>
-          <div className="flex flex-col">
-            <span className="text-xs font-medium text-zinc-400">
-              {session.tenantType === "company" ? "Company tenant" : "User tenant"} ({session.personaRole})
-            </span>
-            <span className="text-sm font-semibold text-zinc-100">
-              Cockpit
-            </span>
-          </div>
+          <div className="flex flex-col" aria-hidden="true" />
         </header>
         <main className="flex-1 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black px-4 py-6">
           <div className="mx-auto w-full max-w-none">{children}</div>

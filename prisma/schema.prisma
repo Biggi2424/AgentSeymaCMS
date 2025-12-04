@@ -49,6 +49,14 @@ model User {
   role         UserRole
   authProvider String    @default("local") @map("auth_provider")
   authSubjectId String?  @map("auth_subject_id")
+  passwordHash String    @map("password_hash")
+  plan         String    @default("trial")
+  trialExpiresAt DateTime? @map("trial_expires_at")
+  tokensUsedPeriod Int   @default(0) @map("tokens_used_period")
+  tokensQuotaPeriod Int  @default(50000) @map("tokens_quota_period")
+  throttleState String   @default("normal") @map("throttle_state")
+  tenantType    String   @default("user") @map("tenant_type")
+  personaRole   String   @default("user") @map("persona_role")
   createdAt    DateTime  @default(now()) @map("created_at")
   lastLoginAt  DateTime? @map("last_login_at")
 

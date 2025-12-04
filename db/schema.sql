@@ -22,6 +22,14 @@ CREATE TABLE users (
     role            TEXT NOT NULL CHECK (role IN ('owner','admin','operator','viewer')),
     auth_provider   TEXT NOT NULL DEFAULT 'local',
     auth_subject_id TEXT,
+    password_hash   TEXT NOT NULL,
+    plan            TEXT NOT NULL DEFAULT 'trial',
+    trial_expires_at TIMESTAMPTZ,
+    tokens_used_period INT NOT NULL DEFAULT 0,
+    tokens_quota_period INT NOT NULL DEFAULT 50000,
+    throttle_state  TEXT NOT NULL DEFAULT 'normal',
+    tenant_type     TEXT NOT NULL DEFAULT 'user',
+    persona_role    TEXT NOT NULL DEFAULT 'user',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     last_login_at   TIMESTAMPTZ
 );
