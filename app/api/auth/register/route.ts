@@ -32,31 +32,48 @@ export async function POST(request: NextRequest) {
 
   const slugBase = slugify(email.split("@")[0] || displayName) || "tenant";
   const slug = `${slugBase}-${randomBytes(3).toString("hex")}`;
+  const tenantKey = randomBytes(8).toString("hex");
 
   try {
-    const tenant = await db.tenant.create({
-      data: {
-        name: displayName,
-        slug,
-      },
-    });
+    const { user } = await db.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          key: tenantKey,
+          name: displayName,
+          slug,
+          plan: "trial",
+        },
+      });
 
-    const user = await db.user.create({
-      data: {
-        tenantId: tenant.id,
-        email,
-        displayName,
-        role: "owner",
-        authProvider: "local",
-        passwordHash: hashPassword(password),
-        plan: "trial",
-        trialExpiresAt: new Date("2025-12-31T00:00:00Z"),
-        tokensQuotaPeriod: 50000,
-        tokensUsedPeriod: 0,
-        throttleState: "normal",
-        tenantType: "user",
-        personaRole: "user",
-      },
+      const user = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          email,
+          displayName,
+          role: "owner",
+          authProvider: "local",
+          passwordHash: hashPassword(password),
+          plan: "trial",
+          trialExpiresAt: new Date("2025-12-31T00:00:00Z"),
+          tokensQuotaPeriod: 50000,
+          tokensUsedPeriod: 0,
+          throttleState: "normal",
+          tenantType: "user",
+          personaRole: "user",
+        },
+      });
+
+      await tx.coreUser.create({
+        data: {
+          id: user.id,
+          tenantId: tenant.id,
+          email,
+          displayName,
+          principalName: email,
+        },
+      });
+
+      return { tenant, user };
     });
 
     await setSessionCookie(user.id);

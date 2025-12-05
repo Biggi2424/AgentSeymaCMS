@@ -14,6 +14,14 @@ type AgentWithRelations = {
   events: { id: bigint; eventType: string; message: string; createdAt: Date }[];
 };
 
+type CoreDevice = {
+  id: string;
+  hostname: string;
+  userName: string;
+  osVersion: string;
+  lastSeenAt: Date | null;
+};
+
 export default async function AgentsPage() {
   const session = await getCurrentUser();
   const db = getDb();
@@ -28,6 +36,10 @@ export default async function AgentsPage() {
       user: { select: { displayName: true } },
     },
   })) as AgentWithRelations[];
+  const devices = (await db.coreDevice.findMany({
+    where: { tenantId: session.tenantId },
+    orderBy: { lastSeenAt: "desc" },
+  })) as CoreDevice[];
 
   const onlineCount = agents.filter((a) => a.onlineStatus === "online").length;
   const offlineCount = agents.length - onlineCount;
@@ -35,9 +47,9 @@ export default async function AgentsPage() {
   return (
     <div className="w-full space-y-8 px-6">
       {session.tenantType === "user" ? (
-        <UserDevices agents={agents} onlineCount={onlineCount} offlineCount={offlineCount} />
+        <UserDevices agents={agents} devices={devices} onlineCount={onlineCount} offlineCount={offlineCount} />
       ) : (
-        <CompanyFleet agents={agents} onlineCount={onlineCount} offlineCount={offlineCount} />
+        <CompanyFleet agents={agents} devices={devices} onlineCount={onlineCount} offlineCount={offlineCount} />
       )}
     </div>
   );
@@ -45,10 +57,12 @@ export default async function AgentsPage() {
 
 function UserDevices({
   agents,
+  devices,
   onlineCount,
   offlineCount,
 }: {
   agents: AgentWithRelations[];
+  devices: CoreDevice[];
   onlineCount: number;
   offlineCount: number;
 }) {
@@ -135,16 +149,41 @@ function UserDevices({
           </div>
         ))}
       </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Devices</p>
+            <p className="text-sm text-zinc-300">Best effort sync from controlplane.</p>
+          </div>
+          <span className="text-xs text-zinc-400">{devices.length} gefunden</span>
+        </div>
+        <div className="mt-3 grid grid-cols-12 gap-4">
+          {devices.map((device) => (
+            <div key={device.id} className="col-span-12 md:col-span-6 lg:col-span-4 rounded-xl border border-zinc-800 bg-black/40 p-3">
+              <p className="text-sm font-semibold text-zinc-50">{device.hostname}</p>
+              <p className="text-xs text-zinc-400">{device.userName}</p>
+              <p className="text-xs text-zinc-400">{device.osVersion}</p>
+              <p className="text-[11px] text-zinc-500">
+                Last seen: {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString("de-DE") : "n/a"}
+              </p>
+            </div>
+          ))}
+          {devices.length === 0 && <p className="col-span-12 text-sm text-zinc-500">Keine Devices im Controlplane.</p>}
+        </div>
+      </div>
     </div>
   );
 }
 
 function CompanyFleet({
   agents,
+  devices,
   onlineCount,
   offlineCount,
 }: {
   agents: AgentWithRelations[];
+  devices: CoreDevice[];
   onlineCount: number;
   offlineCount: number;
 }) {
@@ -188,6 +227,26 @@ function CompanyFleet({
             </div>
           ))}
           {agents.length === 0 && <p className="col-span-12 text-sm text-zinc-500">Keine Agents.</p>}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-zinc-50">Devices (Controlplane)</p>
+          <span className="text-xs text-zinc-400">{devices.length} total</span>
+        </div>
+        <div className="mt-3 grid grid-cols-12 gap-4">
+          {devices.map((device) => (
+            <div key={device.id} className="col-span-12 md:col-span-6 lg:col-span-4 rounded-xl border border-zinc-800 bg-black/40 p-3">
+              <p className="text-sm font-semibold text-zinc-50">{device.hostname}</p>
+              <p className="text-xs text-zinc-400">{device.userName}</p>
+              <p className="text-xs text-zinc-400">{device.osVersion}</p>
+              <p className="text-[11px] text-zinc-500">
+                Last seen: {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString("de-DE") : "n/a"}
+              </p>
+            </div>
+          ))}
+          {devices.length === 0 && <p className="col-span-12 text-sm text-zinc-500">Keine Devices.</p>}
         </div>
       </div>
     </div>

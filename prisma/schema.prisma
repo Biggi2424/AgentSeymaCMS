@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["portal", "core"]
 }
 
 enum UserRole {
@@ -11,6 +12,8 @@ enum UserRole {
   admin
   operator
   viewer
+
+  @@schema("portal")
 }
 
 enum TicketStatus {
@@ -21,6 +24,7 @@ enum TicketStatus {
   closed
 
   @@map("ticket_status")
+  @@schema("portal")
 }
 
 enum TicketPriority {
@@ -30,30 +34,39 @@ enum TicketPriority {
   critical
 
   @@map("ticket_priority")
+  @@schema("portal")
 }
 
 enum TicketSource {
   portal
   email
   agent
+
+  @@schema("portal")
 }
 
 enum PackageType {
   msi
   exe
   script
+
+  @@schema("portal")
 }
 
 enum RebootBehavior {
   never
   if_needed
   always
+
+  @@schema("portal")
 }
 
 enum DeploymentRolloutStrategy {
   all_at_once
   ring
   scheduled
+
+  @@schema("portal")
 }
 
 enum DeploymentStatus {
@@ -62,6 +75,8 @@ enum DeploymentStatus {
   completed
   cancelled
   failed
+
+  @@schema("portal")
 }
 
 enum DeploymentResultStatus {
@@ -70,11 +85,15 @@ enum DeploymentResultStatus {
   success
   failed
   skipped
+
+  @@schema("portal")
 }
 
 enum CatalogItemType {
   software
   service
+
+  @@schema("portal")
 }
 
 enum CatalogRequestStatus {
@@ -84,13 +103,23 @@ enum CatalogRequestStatus {
   rejected
   fulfilled
   cancelled
+
+  @@schema("portal")
 }
 
 model Tenant {
   id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique @map("key")
   name      String
-  slug      String   @unique
+  plan      String   @default("standard")
+  telemetry String   @default("minimal") @map("telemetry_mode")
+  tenantKey String?  @map("tenant_key")
+  slug      String?  @unique
+  tenantType String  @default("user") @map("tenant_type")
+  tokenQuotaDaily   Int? @map("token_quota_daily")
+  tokenQuotaMonthly Int? @map("token_quota_monthly")
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   users              User[]
   agents             Agent[]
@@ -107,14 +136,17 @@ model Tenant {
   catalogRequests    CatalogRequest[]
   apiKeys            ApiKey[]
   paymentMethods     PaymentMethod[]
+  coreUsers          CoreUser[]
+  coreDevices        CoreDevice[]
 
+  @@schema("core")
   @@map("tenants")
 }
 
 model User {
   id                String    @id @default(uuid()) @db.Uuid
   tenantId          String    @map("tenant_id") @db.Uuid
-  email             String    @db.Citext
+  email             String
   displayName       String    @map("display_name")
   role              UserRole
   authProvider      String    @default("local") @map("auth_provider")
@@ -145,7 +177,39 @@ model User {
   paymentMethods      PaymentMethod[]
 
   @@unique([tenantId, email], map: "users_tenant_email_uq")
+  @@schema("portal")
   @@map("users")
+}
+
+model CoreUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  principalName String? @map("principal_name")
+  displayName  String?  @map("display_name")
+  email        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@schema("core")
+  @@map("users")
+}
+
+model CoreDevice {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  externalId   String   @map("external_id")
+  hostname     String
+  userName     String   @map("user_name")
+  osVersion    String   @map("os_version")
+  capabilities Json?    @default("{}")
+  lastSeenAt   DateTime? @map("last_seen_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@schema("core")
+  @@map("devices")
 }
 
 model Agent {
@@ -170,6 +234,7 @@ model Agent {
 
   @@index([tenantId], map: "agents_tenant_idx")
   @@index([tenantId, deviceName], map: "agents_tenant_hostname")
+  @@schema("portal")
   @@map("agents")
 }
 
@@ -188,6 +253,7 @@ model AgentEvent {
 
   @@index([agentId, createdAt], map: "agent_events_agent_idx")
   @@index([tenantId, createdAt], map: "agent_events_tenant_idx")
+  @@schema("portal")
   @@map("agent_events")
 }
 
@@ -216,6 +282,7 @@ model Ticket {
   @@unique([tenantId, humanId], map: "tickets_tenant_human_id_uq")
   @@index([tenantId, status, createdAt], map: "tickets_tenant_status_idx")
   @@index([requesterUserId, createdAt], map: "tickets_requester_idx")
+  @@schema("portal")
   @@map("tickets")
 }
 
@@ -235,6 +302,7 @@ model TicketComment {
   agent      Agent? @relation("TicketCommentAgent", fields: [agentId], references: [id])
 
   @@index([ticketId, createdAt], map: "ticket_comments_ticket_idx")
+  @@schema("portal")
   @@map("ticket_comments")
 }
 
@@ -254,6 +322,7 @@ model TicketAttachment {
   uploader User?  @relation("AttachmentUploader", fields: [uploadedBy], references: [id])
 
   @@index([ticketId], map: "ticket_attachments_ticket_idx")
+  @@schema("portal")
   @@map("ticket_attachments")
 }
 
@@ -278,6 +347,7 @@ model Package {
   linkedCatalogItems CatalogItem[] @relation("LinkedPackage")
 
   @@index([tenantId, name], map: "packages_tenant_name_idx")
+  @@schema("portal")
   @@map("packages")
 }
 
@@ -295,6 +365,7 @@ model DeviceGroup {
   deployments Deployment[]
 
   @@index([tenantId, name], map: "device_groups_tenant_idx")
+  @@schema("portal")
   @@map("device_groups")
 }
 
@@ -308,6 +379,7 @@ model DeviceGroupMember {
   tenantId    String?     @db.Uuid
 
   @@id([deviceGroupId, agentId])
+  @@schema("portal")
   @@map("device_group_members")
 }
 
@@ -333,6 +405,7 @@ model Deployment {
   catalogRequests CatalogRequest[]
 
   @@index([tenantId, createdAt], map: "deployments_tenant_idx")
+  @@schema("portal")
   @@map("deployments")
 }
 
@@ -352,6 +425,7 @@ model DeploymentResult {
 
   @@index([deploymentId, status], map: "deployment_results_deployment_idx")
   @@index([agentId, lastUpdateAt], map: "deployment_results_agent_idx")
+  @@schema("portal")
   @@map("deployment_results")
 }
 
@@ -376,6 +450,7 @@ model CatalogItem {
   requests      CatalogRequest[]
 
   @@index([tenantId, category, isActive], map: "catalog_items_tenant_idx")
+  @@schema("portal")
   @@map("catalog_items")
 }
 
@@ -399,6 +474,7 @@ model CatalogRequest {
   deployment    Deployment? @relation(fields: [deploymentId], references: [id])
 
   @@index([tenantId, status, createdAt], map: "catalog_requests_tenant_status_idx")
+  @@schema("portal")
   @@map("catalog_requests")
 }
 
@@ -417,6 +493,7 @@ model ApiKey {
   creator User?  @relation("ApiKeyCreatedBy", fields: [createdBy], references: [id])
 
   @@index([tenantId, isRevoked], map: "api_keys_tenant_idx")
+  @@schema("portal")
   @@map("api_keys")
 }
 
@@ -438,5 +515,6 @@ model PaymentMethod {
 
   @@unique([tenantId, fingerprint], map: "payment_methods_fingerprint_uq")
   @@index([tenantId, status], map: "payment_methods_tenant_status_idx")
+  @@schema("portal")
   @@map("payment_methods")
 }

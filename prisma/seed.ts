@@ -92,16 +92,20 @@ function passwordHash(password: string, saltLabel: string) {
 
 async function resetDatabase() {
   await prisma.$executeRawUnsafe(
-    `TRUNCATE TABLE catalog_requests, catalog_items, deployment_results, deployments, device_group_members, device_groups, packages, ticket_attachments, ticket_comments, tickets, agent_events, agents, api_keys, users, tenants RESTART IDENTITY CASCADE`
+    `TRUNCATE TABLE portal.catalog_requests, portal.catalog_items, portal.deployment_results, portal.deployments, portal.device_group_members, portal.device_groups, portal.packages, portal.ticket_attachments, portal.ticket_comments, portal.tickets, portal.agent_events, portal.agents, portal.api_keys, portal.users RESTART IDENTITY CASCADE`
   );
+  await prisma.$executeRawUnsafe(`TRUNCATE TABLE core.users RESTART IDENTITY CASCADE`);
+  await prisma.$executeRawUnsafe(`TRUNCATE TABLE core.tenants RESTART IDENTITY CASCADE`);
 }
 
 async function seedTenants() {
   const personal = await prisma.tenant.create({
     data: {
       id: ids.tenant.personal,
+      key: "aurora-personal",
       name: "Aurora Personal Workspace",
       slug: "aurora-personal",
+      plan: "trial",
       createdAt: seedDates.personalTenantCreated,
     },
   });
@@ -109,8 +113,10 @@ async function seedTenants() {
   const company = await prisma.tenant.create({
     data: {
       id: ids.tenant.company,
+      key: "helios-manufacturing",
       name: "Helios Manufacturing GmbH",
       slug: "helios-manufacturing",
+      plan: "enterprise",
       createdAt: seedDates.companyTenantCreated,
     },
   });
@@ -138,6 +144,16 @@ async function seedUsers() {
       createdAt: seedDates.personalUserCreated,
     },
   });
+  await prisma.coreUser.create({
+    data: {
+      id: ids.user.personal,
+      tenantId: ids.tenant.personal,
+      email: personalUser.email,
+      displayName: personalUser.displayName,
+      principalName: personalUser.email,
+      createdAt: personalUser.createdAt,
+    },
+  });
 
   const companyAdmin = await prisma.user.create({
     data: {
@@ -158,6 +174,16 @@ async function seedUsers() {
       createdAt: seedDates.companyAdminCreated,
     },
   });
+  await prisma.coreUser.create({
+    data: {
+      id: ids.user.companyAdmin,
+      tenantId: ids.tenant.company,
+      email: companyAdmin.email,
+      displayName: companyAdmin.displayName,
+      principalName: companyAdmin.email,
+      createdAt: companyAdmin.createdAt,
+    },
+  });
 
   const companyAgent = await prisma.user.create({
     data: {
@@ -176,6 +202,16 @@ async function seedUsers() {
       tenantType: "company",
       personaRole: "company_agent",
       createdAt: seedDates.companyAgentCreated,
+    },
+  });
+  await prisma.coreUser.create({
+    data: {
+      id: ids.user.companyAgent,
+      tenantId: ids.tenant.company,
+      email: companyAgent.email,
+      displayName: companyAgent.displayName,
+      principalName: companyAgent.email,
+      createdAt: companyAgent.createdAt,
     },
   });
 
